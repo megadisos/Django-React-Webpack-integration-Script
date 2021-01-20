@@ -1,5 +1,6 @@
 import os
 from shutil import copyfile
+from react_app_creation import ReactAppCreation
 class Api_creation():
     def __init__(self, name,path,size):
         self.name = name
@@ -52,7 +53,9 @@ class Api_creation():
 
         data[location] = "from django.urls import path,include" 
 
-        data.insert(location2+1,"\tpath('',include('api.urls')),\n")    
+        data.insert(location2+1,"\tpath('',include('api.urls')),\n")   
+
+     
 
         with open(url_path,"w") as f:
             f.writelines(data)
@@ -62,5 +65,9 @@ class Api_creation():
         os.system("python manage.py makemigrations")
         print(" 2.2- Runing migrations ...")
         os.system("python manage.py migrate")
+        print("")
         print(f"The API was created")
         print("*"*self.size)
+        react = ReactAppCreation(self.size, self.path,self.name)
+        react.files_configuration()
+

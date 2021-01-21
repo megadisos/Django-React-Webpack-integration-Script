@@ -1,6 +1,7 @@
 import os
 from shutil import copyfile
 from react_app_creation import ReactAppCreation
+from integration_files.aditional_tasks import read_file, write_file
 class Api_creation():
     def __init__(self, name,path,size):
         self.name = name
@@ -10,6 +11,7 @@ class Api_creation():
         FILES_TO_DELETE = ["models.py","views.py","serializers.py","urls.py"]
         location = 0
         location2 = 0
+        loc= 0
         print("2- Creating the API ...")
         # set the paths
         path = os.path.join(self.path,self.name)
@@ -28,23 +30,23 @@ class Api_creation():
         # Editing the settings.py file
         settings_path = os.path.join(self.path,self.name,self.name,"settings.py")
         print(settings_path)
-        with open(settings_path,"r") as f:
-            data = f.readlines()
-
+        data = read_file(settings_path)
         for dt in data:
             if "INSTALLED_APPS" in dt:
                 location = data.index(dt)
+            elif "'DIRS': []," in dt:
+                loc = data.index(dt)
+                print(loc)
 
         data.insert(location+1,"\t'rest_framework',\n")
         data.insert(location+2,"\t'api',\n")       
-
-        with open(settings_path,"w") as f:
-            f.writelines(data) 
+        pt = os.path.join(self.path,self.name,"frontend","templates")
+        data[loc+2] = "\t\t'DIRS': [r'"+pt+"'],\n"
+        write_file(settings_path,data)
             
         # Editing the urls.py file 
         url_path =   os.path.join(self.path,self.name,self.name,"urls.py")  
-        with open(url_path,"r") as f:
-            data = f.readlines()
+        data = read_file(url_path)
         for dt in data:
             if "from django.urls import path" in dt:
                 location = data.index(dt)
@@ -54,11 +56,7 @@ class Api_creation():
         data[location] = "from django.urls import path,include" 
 
         data.insert(location2+1,"\tpath('',include('api.urls')),\n")   
-
-     
-
-        with open(url_path,"w") as f:
-            f.writelines(data)
+        write_file(url_path,data)
         # Makemigrations
         os.chdir(os.path.join(self.path,self.name))
         print(" 2.1- Runing Makemigrations ...")

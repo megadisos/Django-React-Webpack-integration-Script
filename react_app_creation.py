@@ -1,6 +1,7 @@
 import os
 from shutil import copyfile,copy
 import shutil
+from integration_files.aditional_tasks import read_file, write_file
 class ReactAppCreation:
     def __init__(self,size,path,name):
         self.size = size
@@ -50,6 +51,7 @@ class ReactAppCreation:
         print("*"*self.size)
     
     def files_configuration(self):
+        pos = 0
         files_path = os.path.dirname(os.path.abspath(__file__))
         self.folder_creation()
         self.react_project_creation()
@@ -61,33 +63,57 @@ class ReactAppCreation:
                      os.path.join(self.path,self.name,"frontend"))
 
         shutil.copy(os.path.join(files_path,"files","index.html"),
-                    os.path.join(self.path,"frontend","templates","frontend"))  
+                    os.path.join(self.path,self.name,"frontend","templates","frontend"))  
         shutil.copy(os.path.join(files_path,"files","urls.py.fe"),
-                    os.path.join(self.path,"frontend","urls.py"))                       
+                    os.path.join(self.path,self.name,"frontend","urls.py"))  
+        
+        shutil.copy(os.path.join(files_path,"files","Apps.js"),
+                    os.path.join(self.path,self.name,"frontend","src","components"))    
+
         packagejs_path = os.path.join(self.path,self.name,"frontend","package.json")       
-
-        with open(packagejs_path,"r") as file:
-            data = file.readlines()
-
+    
+        data = read_file(packagejs_path)
+    
         for dt in data:
             if '"test"' in dt:
                 location = data.index(dt)  
         data[location] = '\t\t"dev": "webpack --mode development --watch",\n'    
         data.insert(location+1,'\t\t"build": "webpack --mode production"\n')   
-        with open(packagejs_path,"w") as file:
-            file.writelines(data)
-        with open(os.path.join(self.path,self.name,"frontend","src","index.js"), "w") as file:
-            file.writelines(['import App from "./components/App";\n'])
-        
+        write_file(packagejs_path,data)
+        write_file(os.path.join(self.path,self.name,"frontend","src","index.js"),
+                    ['import App from "./components/Apps";\n'])
+       
         ## Django Files
         views_path = os.path.join(self.path,self.name,"frontend","views.py")
         data = ["from django.shortcuts import render\n","def index(request, *args,**kwargs):","\treturn render(request,'frontend/index.html')"]
-        with open(views_path, "r") as file:
-            file.writelines(data)     
-
-
-        print("The configuration was done")         
-        print("*"*self.size)    
+        write_file(views_path,data)  
+        url_path = os.path.join(self.path,self.name,self.name,"urls.py")
+        data = read_file(url_path)
+        for dt in data:    
+            if "urlpatterns" in dt:
+                pos = data.index(dt)
+        data.insert(pos+1,"path('', include('frontend.urls')),\n")  
+        write_file(url_path,data)      
+        settings_path= os.path.join(self.path,self.name,self.name,"settings.py")
+        data = read_file(settings_path)
+        for dt in data:
+             if "INSTALLED_APPS" in dt:
+                pos = data.index(dt)
+        data.insert(pos+1,"\t'frontend.apps.FrontendConfig',\n") 
+        write_file(settings_path,data)       
+        # Run the react
+        frontend_path= os.path.join(self.path,self.name,"frontend")
+        backend_path = os.path.join(self.path,self.name)
+        print("The configuration was done")  
+        print("*"*self.size) 
+        print("The integration was complete, you can start the application running the following commands:")
+        print(f"FrontEnd: run the folowing command on {frontend_path}")
+        print("   npm run dev")
+        print(f"Backend: run the folowing command on {backend_path}")
+        print("  python manage.py runserver")
+        print("*"*self.size) 
+           
+          
         
      
 
